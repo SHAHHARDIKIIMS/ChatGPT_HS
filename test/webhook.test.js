@@ -1,6 +1,7 @@
 const { describe, it, before, after, beforeEach } = require("node:test");
 const assert = require("node:assert/strict");
 const http = require("node:http");
+const { setMockMode } = require("../src/whatsapp");
 const { app } = require("../src/index");
 const { clearSession, getAllSessions } = require("../src/store");
 
@@ -66,6 +67,7 @@ function eightx8Payload(msisdn, text) {
 }
 
 before(() => {
+  setMockMode(true);
   return new Promise((resolve) => {
     server = app.listen(0, () => {
       const { port } = server.address();

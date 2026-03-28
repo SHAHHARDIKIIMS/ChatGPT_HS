@@ -2,6 +2,12 @@ const https = require("node:https");
 
 const EIGHTX8_BASE_HOST = "chatapps.8x8.com";
 
+let forceMock = false;
+
+function setMockMode(enabled) {
+  forceMock = enabled;
+}
+
 function getConfig() {
   return {
     apiKey: process.env.EIGHTX8_API_KEY || "",
@@ -12,7 +18,7 @@ function getConfig() {
 function sendWhatsAppMessage(to, body) {
   const { apiKey, subAccountId } = getConfig();
 
-  if (!apiKey || !subAccountId) {
+  if (forceMock || !apiKey || !subAccountId) {
     console.log(`[WhatsApp MOCK → ${to}] ${body}`);
     return Promise.resolve({ success: true, to, body, mock: true });
   }
@@ -66,4 +72,4 @@ function sendWhatsAppMessage(to, body) {
   });
 }
 
-module.exports = { sendWhatsAppMessage };
+module.exports = { sendWhatsAppMessage, setMockMode };

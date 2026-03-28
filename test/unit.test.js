@@ -1,9 +1,13 @@
-const { describe, it } = require("node:test");
+const { describe, it, before } = require("node:test");
 const assert = require("node:assert/strict");
 const { createZoomMeeting } = require("../src/zoom");
-const { sendWhatsAppMessage } = require("../src/whatsapp");
+const { sendWhatsAppMessage, setMockMode } = require("../src/whatsapp");
 const { getSession, setSession, clearSession } = require("../src/store");
 const { parseDatetime } = require("../src/gpt");
+
+before(() => {
+  setMockMode(true);
+});
 
 describe("createZoomMeeting", () => {
   it("returns a meeting object with a link", () => {
