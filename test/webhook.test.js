@@ -48,6 +48,23 @@ function get(path) {
   });
 }
 
+function eightx8Payload(msisdn, text) {
+  return {
+    namespace: "ChatApps",
+    eventType: "inbound_message_received",
+    description: "ChatApps inbound message",
+    payload: {
+      umid: "test-" + Math.random().toString(36).substring(2, 8),
+      subAccountId: "TestSubAccount",
+      timestamp: new Date().toISOString(),
+      user: { msisdn, channelUserId: msisdn.replace("+", ""), name: "Test User" },
+      recipient: { channel: "whatsapp", channelId: "test-channel" },
+      type: "Text",
+      content: { text },
+    },
+  };
+}
+
 before(() => {
   return new Promise((resolve) => {
     server = app.listen(0, () => {
@@ -79,7 +96,7 @@ describe("GET /health", () => {
   });
 });
 
-describe("POST /webhook/whatsapp", () => {
+describe("POST /webhook/whatsapp — simple format", () => {
   it("returns 400 when From is missing", async () => {
     const res = await post("/webhook/whatsapp", { Body: "Hi" });
     assert.equal(res.status, 400);
@@ -96,15 +113,7 @@ describe("POST /webhook/whatsapp", () => {
     assert.equal(res.body.reply, "Hi! What is your name?");
   });
 
-  it("asks for datetime after receiving name", async () => {
-    await post("/webhook/whatsapp", { From: "+1111111111", Body: "Hi" });
-    const res = await post("/webhook/whatsapp", { From: "+1111111111", Body: "Alice" });
-    assert.equal(res.status, 200);
-    assert.match(res.body.reply, /Thanks Alice/);
-    assert.match(res.body.reply, /date and time/);
-  });
-
-  it("confirms appointment with Zoom link after datetime", async () => {
+  it("full flow: name → datetime → confirmation", async () => {
     await post("/webhook/whatsapp", { From: "+2222222222", Body: "Hi" });
     await post("/webhook/whatsapp", { From: "+2222222222", Body: "Bob" });
     const res = await post("/webhook/whatsapp", { From: "+2222222222", Body: "tomorrow 5pm" });
@@ -135,5 +144,75 @@ describe("POST /webhook/whatsapp", () => {
     const res = await post("/webhook/whatsapp", { from: "+5555555555", body: "hello" });
     assert.equal(res.status, 200);
     assert.equal(res.body.reply, "Hi! What is your name?");
+  });
+});
+
+describe("POST /webhook/whatsapp — 8x8 ChatApps format", () => {
+  it("asks for name on initial Hi message", async () => {
+    const res = await post("/webhook/whatsapp", eightx8Payload("+916363251958", "Hi"));
+    assert.equal(res.status, 200);
+    assert.equal(res.body.reply, "Hi! What is your name?");
+  });
+
+  it("full flow through 8x8 payloads", async () => {
+    const phone = "+919876543210";
+    await post("/webhook/whatsapp", eightx8Payload(phone, "Hi"));
+
+    const nameRes = await post("/webhook/whatsapp", eightx8Payload(phone, "Dr. Shah"));
+    assert.equal(nameRes.status, 200);
+    assert.match(nameRes.body.reply, /Thanks Dr\. Shah/);
+    assert.match(nameRes.body.reply, /date and time/);
+
+    const dtRes = await post("/webhook/whatsapp", eightx8Payload(phone, "tomorrow 5pm"));
+    assert.equal(dtRes.status, 200);
+    assert.match(dtRes.body.reply, /appointment is confirmed/);
+    assert.match(dtRes.body.reply, /zoom\.us/);
+  });
+
+  it("returns 400 for 8x8 payload with missing text", async () => {
+    const payload = {
+      namespace: "ChatApps",
+      eventType: "inbound_message_received",
+      payload: {
+        umid: "test-empty",
+        user: { msisdn: "+910000000000" },
+        type: "Text",
+        content: { text: "" },
+      },
+    };
+    const res = await post("/webhook/whatsapp", payload);
+    assert.equal(res.status, 400);
+  });
+
+  it("handles interactive button reply", async () => {
+    await post("/webhook/whatsapp", eightx8Payload("+918888888888", "Hi"));
+
+    const payload = {
+      namespace: "ChatApps",
+      eventType: "inbound_message_received",
+      payload: {
+        umid: "test-interactive",
+        user: { msisdn: "+918888888888" },
+        type: "Interactive",
+        content: {
+          interactive: {
+            type: "button_reply",
+            button_reply: { id: "option-1", title: "Alice" },
+          },
+        },
+      },
+    };
+    const res = await post("/webhook/whatsapp", payload);
+    assert.equal(res.status, 200);
+    assert.match(res.body.reply, /Thanks Alice/);
+  });
+
+  it("ignores non-inbound event types gracefully", async () => {
+    const payload = {
+      eventType: "outbound_message_status_changed",
+      payload: { umid: "test", status: { state: "delivered" } },
+    };
+    const res = await post("/webhook/whatsapp", payload);
+    assert.equal(res.status, 400);
   });
 });

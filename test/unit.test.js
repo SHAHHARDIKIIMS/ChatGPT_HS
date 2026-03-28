@@ -16,9 +16,12 @@ describe("createZoomMeeting", () => {
 });
 
 describe("sendWhatsAppMessage", () => {
-  it("returns a success result", () => {
-    const result = sendWhatsAppMessage("+1234567890", "Hello");
-    assert.deepEqual(result, { success: true, to: "+1234567890", body: "Hello" });
+  it("returns a success result in mock mode", async () => {
+    const result = await sendWhatsAppMessage("+1234567890", "Hello");
+    assert.equal(result.success, true);
+    assert.equal(result.to, "+1234567890");
+    assert.equal(result.body, "Hello");
+    assert.equal(result.mock, true);
   });
 });
 
