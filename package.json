@@ -1,0 +1,21 @@
+{
+  "name": "whatsapp-appointment-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp-based appointment booking bot with Express, chrono-node, 8x8 ChatApps, and mock Zoom",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "lint": "eslint src/ test/",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "dependencies": {
+    "chrono-node": "^2.9.0",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.14.0"
+  }
+}
