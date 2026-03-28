@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const { createZoomMeeting } = require("../src/zoom");
 const { sendWhatsAppMessage } = require("../src/whatsapp");
 const { getSession, setSession, clearSession } = require("../src/store");
-const { fallbackParseDatetime } = require("../src/gpt");
+const { parseDatetime } = require("../src/gpt");
 
 describe("createZoomMeeting", () => {
   it("returns a meeting object with a link", () => {
@@ -44,9 +44,9 @@ describe("store", () => {
   });
 });
 
-describe("fallbackParseDatetime", () => {
+describe("parseDatetime (chrono-node)", () => {
   it("parses 'tomorrow 5pm'", () => {
-    const iso = fallbackParseDatetime("tomorrow 5pm");
+    const iso = parseDatetime("tomorrow 5pm");
     const d = new Date(iso);
     assert.equal(d.getHours(), 17);
     const tomorrow = new Date();
@@ -54,15 +54,22 @@ describe("fallbackParseDatetime", () => {
     assert.equal(d.getDate(), tomorrow.getDate());
   });
 
-  it("parses '3am'", () => {
-    const iso = fallbackParseDatetime("3am");
+  it("parses 'next friday at 3pm'", () => {
+    const iso = parseDatetime("next friday at 3pm");
     const d = new Date(iso);
-    assert.equal(d.getHours(), 3);
+    assert.equal(d.getHours(), 15);
+    assert.equal(d.getDay(), 5);
   });
 
-  it("defaults to 10am when no time match", () => {
-    const iso = fallbackParseDatetime("sometime next week");
+  it("parses '10am'", () => {
+    const iso = parseDatetime("10am");
     const d = new Date(iso);
     assert.equal(d.getHours(), 10);
+  });
+
+  it("falls back gracefully on unparseable input", () => {
+    const iso = parseDatetime("asdfghjkl");
+    const d = new Date(iso);
+    assert.ok(!Number.isNaN(d.getTime()));
   });
 });

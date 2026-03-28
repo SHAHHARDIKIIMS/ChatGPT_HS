@@ -1,6 +1,6 @@
 ## Cursor Cloud specific instructions
 
-WhatsApp appointment booking bot — Node.js/Express backend with in-memory state, OpenAI GPT-4o datetime parsing, 8x8 ChatApps WhatsApp integration, and mock Zoom.
+WhatsApp appointment booking bot — Node.js/Express backend with in-memory state, chrono-node datetime parsing, 8x8 ChatApps WhatsApp integration, and mock Zoom.
 
 ### Services
 
@@ -20,7 +20,7 @@ WhatsApp appointment booking bot — Node.js/Express backend with in-memory stat
 - **8x8 WhatsApp integration:** Set `EIGHTX8_API_KEY` and `EIGHTX8_SUBACCOUNT_ID` env vars to enable real WhatsApp messaging via 8x8 ChatApps API. Without them, messages are logged to console (mock mode).
 - **Webhook accepts two formats:** 8x8 ChatApps inbound webhook (`eventType: "inbound_message_received"`) and simple/Twilio-style (`{ From, Body }`). The simple format is handy for curl testing.
 - **WhatsApp 24-hour window:** Free-text replies only work within WhatsApp's 24-hour customer service window (opened when user messages first). Our bot flow always starts with user saying "Hi", so this is satisfied.
-- **OpenAI GPT-4o:** Set `OPENAI_API_KEY` for real datetime parsing. Falls back to a regex parser without it.
+- **Datetime parsing:** Uses `chrono-node` (local, free, no API key). Handles "tomorrow 5pm", "next Monday 3pm", "day after tomorrow 10:30am", etc.
 - **Zoom:** Mock function returning dummy links. No real Zoom credentials needed.
 - **State is in-memory** — restarting the server clears all sessions.
 - **Public URL for 8x8:** To receive real WhatsApp messages, expose port 3000 via ngrok (`ngrok http 3000`) and configure the HTTPS URL in [8x8 Connect → Webhooks](https://connect.8x8.com/webhooks).
