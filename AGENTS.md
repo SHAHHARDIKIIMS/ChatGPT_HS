@@ -24,6 +24,6 @@ WhatsApp appointment booking bot — Node.js/Express backend with in-memory stat
 - **Zoom:** Mock function returning dummy links. No real Zoom credentials needed.
 - **State is in-memory** — restarting the server clears all sessions.
 - **Public URL for 8x8:** To receive real WhatsApp messages, expose port 3000 via ngrok (`ngrok http 3000`) and configure the HTTPS URL in [8x8 Connect → Webhooks](https://connect.8x8.com/webhooks).
-- **Running tests with injected secrets:** If `EIGHTX8_API_KEY` and `EIGHTX8_SUBACCOUNT_ID` are set in the environment (e.g. via Cursor Cloud secrets), the `sendWhatsAppMessage` mock-mode unit test will fail because the code takes the real-API path. Run tests with those vars unset: `env -u EIGHTX8_API_KEY -u EIGHTX8_SUBACCOUNT_ID npm test`.
-- **Dev server in mock mode:** Similarly, start the dev server without 8x8 credentials for local testing: `env -u EIGHTX8_API_KEY -u EIGHTX8_SUBACCOUNT_ID npm run dev`. The bot will log WhatsApp replies to the console instead of sending them via the API.
+- **Tests always use mock mode:** Tests call `setMockMode(true)` so they never send real WhatsApp messages, even when `EIGHTX8_API_KEY`/`EIGHTX8_SUBACCOUNT_ID` are in the environment. Just run `npm test` — no need to unset env vars.
+- **Dev server in mock mode:** To log WhatsApp replies to console instead of sending via the real API, start the server without 8x8 credentials: `env -u EIGHTX8_API_KEY -u EIGHTX8_SUBACCOUNT_ID npm run dev`. With credentials set, the server sends real messages via 8x8.
 - **Hello world test via curl:** Send a simple-format POST to test the full flow: `curl -X POST http://localhost:3000/webhook/whatsapp -H 'Content-Type: application/json' -d '{"From":"+1234567890","Body":"Hi"}'`.
